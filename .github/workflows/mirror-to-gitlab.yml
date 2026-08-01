@@ -91,9 +91,21 @@ jobs:
 
           git lfs fsck
 
-          if ! git -c http.extraheader="${auth_header}" lfs push gitlab HEAD; then
-            echo "Error: GitLab rechazó o no recibió los objetos Git LFS. No se actualizará la referencia Git para evitar que Render clone un commit incompleto." >&2
-            exit 1
+          lfs_oids_file="$(mktemp)"
+          trap 'rm -f "${lfs_oids_file}"' EXIT
+
+          git lfs ls-files --long HEAD \
+            | awk '{print $1}' \
+            | sort -u > "${lfs_oids_file}"
+
+          if [[ -s "${lfs_oids_file}" ]]; then
+            if ! git -c http.extraheader="${auth_header}" \
+              lfs push --object-id gitlab --stdin < "${lfs_oids_file}"; then
+              echo "Error: GitLab rechazó o no recibió los objetos Git LFS usados por HEAD. No se actualizará la referencia Git para evitar que Render clone un commit incompleto." >&2
+              exit 1
+            fi
+          else
+            echo "HEAD no contiene objetos Git LFS; no hay binarios que sincronizar."
           fi
 
       - name: Mirror pushed branch
@@ -109,7 +121,7 @@ jobs:
           git -c http.extraheader="${auth_header}" fetch gitlab \
             "+refs/heads/${branch}:refs/remotes/gitlab/${branch}" || true
 
-          git -c http.extraheader="${auth_header}" push gitlab \
+          GIT_LFS_SKIP_PUSH=1 git -c http.extraheader="${auth_header}" push gitlab \
             "HEAD:refs/heads/${branch}" \
             --force-with-lease
 
@@ -123,5 +135,5 @@ jobs:
           auth_header="Authorization: Basic $(printf '%s:%s' "${mirror_username}" "${GITLAB_MIRROR_TOKEN}" | base64 -w 0)"
           tag="${GITHUB_REF_NAME}"
 
-          git -c http.extraheader="${auth_header}" push gitlab \
+          GIT_LFS_SKIP_PUSH=1 git -c http.extraheader="${auth_header}" push gitlab \
             "refs/tags/${tag}:refs/tags/${tag}"
