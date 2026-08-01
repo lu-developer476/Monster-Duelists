@@ -57,7 +57,12 @@ if not SECRET_KEY:
 
 RUNNING_TESTS = any(arg.startswith('test') for arg in sys.argv)
 
-DEFAULT_ALLOWED_HOSTS = ['do-fu-ioh.onrender.com', '127.0.0.1', 'localhost']
+DEFAULT_ALLOWED_HOSTS = [
+    'monster-duelists.onrender.com',
+    'do-fu-ioh.onrender.com',
+    '127.0.0.1',
+    'localhost',
+]
 ALLOWED_HOSTS = _merge_unique(
     _split_env_list(_get_env('DJANGO_ALLOWED_HOSTS')),
     DEFAULT_ALLOWED_HOSTS,
