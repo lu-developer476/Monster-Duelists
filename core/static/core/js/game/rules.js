@@ -20,3 +20,18 @@ export function absorbDamage({ hp, shell }, damage) {
     shellDamage,
   };
 }
+
+export function canUnitMoveThisTurn(turn = {}, unitId) {
+  const movedUnitId = turn?.moved_unit_id ?? null;
+  return !movedUnitId || movedUnitId === unitId;
+}
+
+export function claimTurnMovement(turn, unitId) {
+  if (!turn || !unitId || !canUnitMoveThisTurn(turn, unitId)) return false;
+  turn.moved_unit_id = unitId;
+  return true;
+}
+
+export function resetTurnMovement(turn) {
+  if (turn) turn.moved_unit_id = null;
+}
