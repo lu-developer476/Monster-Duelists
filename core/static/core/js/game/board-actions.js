@@ -15,11 +15,7 @@ export function getBoardActionAvailability(state = appState) {
 
   return {
     endTurn:
-      hasMatch &&
-      !finished &&
-      !state.aiPlayback &&
-      !match.paused &&
-      isHostTurn,
+      hasMatch && !finished && !state.aiPlayback && !match.paused && isHostTurn,
     pause: hasMatch && !finished,
     restart: hasMatch,
     abandon: hasMatch,
