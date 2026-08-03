@@ -1,9 +1,10 @@
-/* Preserve the established responsive layouts while keeping the page inside
-   Safari's visible viewport. Only the document height and board sizing are
-   constrained here; navigation, controls and breakpoint layouts remain owned
-   by styles.css. */
+/* Final viewport guard.
+   styles.css owns the visual layouts and breakpoint geometry. This file only
+   keeps the established desktop, tablet and mobile layouts inside the visible
+   browser viewport and adds the active-turn presentation. */
 html {
   width: 100%;
+  max-width: 100%;
   height: 100%;
   overflow: hidden;
   overscroll-behavior: none;
@@ -11,46 +12,87 @@ html {
 
 body {
   width: 100%;
+  max-width: 100%;
   height: 100vh;
   height: 100svh;
   height: 100dvh;
-  min-height: 0 !important;
-  padding-top: 0 !important;
-  overflow: hidden !important;
+  min-height: 0;
+  overflow: hidden;
   overscroll-behavior: none;
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  display: flex;
+  flex-direction: column;
 }
 
-.site-navbar {
-  position: sticky !important;
-  top: 0;
+.site-navbar,
+.site-footer {
+  flex: 0 0 auto;
+  max-width: 100%;
+}
+
+.navbar-links {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .arcade-shell.card-game-shell {
-  height: 100%;
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
   min-height: 0;
-  max-height: 100%;
+  max-height: none;
   overflow: hidden;
-  align-content: start;
 }
 
-.duel-panel,
+.duel-panel {
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
 .board-panel,
 .board-action-ring,
-.board-frame {
+.board-frame,
+.board-scroll {
+  min-width: 0;
   min-height: 0;
+  max-width: 100%;
   max-height: 100%;
+}
+
+.board-panel,
+.board-action-ring {
+  height: 100%;
+  overflow: hidden;
 }
 
 .board-action-ring {
-  align-content: center;
+  position: relative;
+  isolation: isolate;
+}
+
+.board-frame {
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
 }
 
 .board-scroll {
-  max-width: 100%;
-  overflow: hidden !important;
+  overflow: hidden;
   scrollbar-gutter: auto;
+}
+
+.board-action {
+  position: relative;
+  z-index: 30;
+  pointer-events: auto;
+  touch-action: manipulation;
+}
+
+.pause-shade {
+  pointer-events: none !important;
 }
 
 .nav-popover-panel,
@@ -60,35 +102,56 @@ body {
   overscroll-behavior: contain;
 }
 
-/* Keep each established device layout and only replace 100vh-based arena
-   sizing with dynamic-viewport and width-aware values. */
+/* Desktop keeps the four controls at the sides of the arena. */
 @media (min-width: 901px) {
   :root {
     --board-cell-size: clamp(
       22px,
-      min(calc((100vw - 380px) / 13), calc((100dvh - 280px) / 9)),
+      min(calc((100vw - 390px) / 13), calc((100dvh - 260px) / 9)),
       64px
     );
   }
 }
 
+/* Tablet keeps the established two-row control layout. */
 @media (min-width: 641px) and (max-width: 900px) {
   :root {
     --board-cell-size: clamp(
-      18px,
-      min(calc((100vw - 76px) / 13), calc((100dvh - 350px) / 9)),
+      17px,
+      min(calc((100vw - 78px) / 13), calc((100dvh - 360px) / 9)),
       52px
     );
   }
 }
 
+/* Mobile navbar is sticky and therefore participates in normal flow. */
 @media (max-width: 640px) {
+  body {
+    padding-top: 0 !important;
+  }
+
+  .site-navbar {
+    width: 100%;
+    min-width: 0;
+  }
+
   :root {
     --board-cell-size: clamp(
-      16px,
-      min(calc((100vw - 48px) / 13), calc((100dvh - 415px) / 9)),
-      38px
+      14px,
+      min(calc((100vw - 82px) / 13), calc((100dvh - 405px) / 9)),
+      36px
     );
+  }
+
+  .arcade-shell.card-game-shell,
+  .duel-panel,
+  .board-action-ring {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .board-action {
+    min-width: 0;
   }
 }
 
