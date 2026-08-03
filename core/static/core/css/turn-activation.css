@@ -1,6 +1,7 @@
-/* The game is a single-screen interface. The page itself must never scroll.
-   Dynamic viewport units keep the layout inside Safari's visible area while
-   its browser chrome expands or collapses. */
+/* Preserve the established responsive layouts while keeping the page inside
+   Safari's visible viewport. Only the document height and board sizing are
+   constrained here; navigation, controls and breakpoint layouts remain owned
+   by styles.css. */
 html {
   width: 100%;
   height: 100%;
@@ -14,8 +15,7 @@ body {
   height: 100svh;
   height: 100dvh;
   min-height: 0 !important;
-  margin: 0;
-  padding: 0 !important;
+  padding-top: 0 !important;
   overflow: hidden !important;
   overscroll-behavior: none;
   display: grid;
@@ -23,235 +23,73 @@ body {
 }
 
 .site-navbar {
-  position: relative !important;
-  inset: auto !important;
-  top: auto !important;
-  min-height: 0 !important;
-  max-width: 100vw;
-  flex-flow: row nowrap !important;
-  align-items: center !important;
-  gap: clamp(0.25rem, 1vw, 0.8rem) !important;
-  padding: clamp(0.3rem, 0.9dvh, 0.65rem) clamp(0.45rem, 1.8vw, 1.5rem) !important;
-}
-
-.navbar-brand {
-  flex: 0 0 auto;
-  width: clamp(2rem, 5.5dvh, 3.6rem) !important;
-  height: clamp(2rem, 5.5dvh, 3.6rem) !important;
-  min-width: 0 !important;
-}
-
-.navbar-links {
-  width: auto !important;
-  min-width: 0;
-  flex: 1 1 auto;
-  display: grid !important;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  align-items: stretch;
-  gap: clamp(0.05rem, 0.45vw, 0.5rem) !important;
-  overflow: visible !important;
-  padding: 0 !important;
-}
-
-.nav-popover,
-.nav-popover > summary {
-  min-width: 0 !important;
-}
-
-.nav-popover > summary {
-  height: 100%;
-  display: grid;
-  place-items: center;
-  padding: clamp(0.3rem, 0.85dvh, 0.7rem) clamp(0.1rem, 0.55vw, 0.55rem) !important;
-  font-size: clamp(0.58rem, 2.35vw, 1rem) !important;
-  line-height: 1;
-  text-align: center;
-  white-space: nowrap;
-}
-
-.nav-popover-panel {
-  max-height: calc(100dvh - 4.5rem);
-  overflow: auto;
-  overscroll-behavior: contain;
+  position: sticky !important;
+  top: 0;
 }
 
 .arcade-shell.card-game-shell {
-  width: 100%;
-  max-width: none !important;
   height: 100%;
-  min-height: 0 !important;
-  max-height: 100%;
-  margin: 0 !important;
-  padding: clamp(0.25rem, 0.9dvh, 0.8rem) clamp(0.35rem, 1.5vw, 1.25rem) !important;
-  overflow: hidden !important;
-  display: grid !important;
-  grid-template-columns: minmax(0, 1fr) !important;
-  grid-template-rows: minmax(0, 1fr) !important;
-  gap: 0 !important;
-}
-
-.duel-panel {
-  width: min(100%, 104rem);
-  height: 100%;
-  min-width: 0;
-  min-height: 0 !important;
-  max-height: 100%;
-  margin: 0 auto;
-  padding: clamp(0.3rem, 0.8dvh, 0.8rem) !important;
-  overflow: hidden;
-  display: grid !important;
-  grid-template-rows: auto minmax(0, 1fr);
-  gap: clamp(0.3rem, 0.8dvh, 0.75rem) !important;
-}
-
-.action-feedback {
   min-height: 0;
-  margin: 0 !important;
-  padding: clamp(0.35rem, 0.9dvh, 0.8rem) clamp(0.55rem, 1.6vw, 1rem) !important;
-  font-size: clamp(0.72rem, 1.8dvh, 1rem) !important;
-  line-height: 1.15 !important;
-  text-align: center;
-}
-
-.board-panel.tactical-preview,
-.board-action-ring {
-  width: 100%;
-  height: 100%;
-  min-width: 0;
-  min-height: 0 !important;
   max-height: 100%;
-  margin: 0 !important;
-}
-
-.board-panel.tactical-preview {
   overflow: hidden;
-  display: grid !important;
-  grid-template-rows: minmax(0, 1fr);
+  align-content: start;
 }
 
-.board-action-ring {
-  padding: 0 !important;
-  overflow: hidden;
-  display: grid !important;
-  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-  grid-template-rows: auto minmax(0, 1fr) auto !important;
-  grid-template-areas:
-    "end pause"
-    "board board"
-    "restart abandon" !important;
-  gap: clamp(0.25rem, 0.75dvh, 0.7rem) clamp(0.3rem, 1vw, 0.85rem) !important;
-}
-
-.board-action-end {
-  grid-area: end !important;
-}
-
-.board-action-pause {
-  grid-area: pause !important;
-}
-
-.board-action-restart {
-  grid-area: restart !important;
-}
-
-.board-action-abandon {
-  grid-area: abandon !important;
-}
-
-.board-action {
-  min-width: 0;
-  min-height: 0 !important;
-  margin: 0 !important;
-  padding: clamp(0.32rem, 0.9dvh, 0.72rem) clamp(0.35rem, 1.2vw, 0.9rem) !important;
-  font-size: clamp(0.7rem, 1.8dvh, 1rem) !important;
-  line-height: 1 !important;
-}
-
+.duel-panel,
+.board-panel,
+.board-action-ring,
 .board-frame {
-  grid-area: board !important;
-  width: 100%;
-  height: 100%;
-  min-width: 0;
-  min-height: 0 !important;
+  min-height: 0;
   max-height: 100%;
-  overflow: hidden;
-  display: grid;
-  place-items: center;
-  container-type: size;
+}
+
+.board-action-ring {
+  align-content: center;
 }
 
 .board-scroll {
-  width: 100%;
-  height: 100%;
-  min-width: 0;
-  min-height: 0;
-  max-height: 100%;
-  padding: 0 !important;
+  max-width: 100%;
   overflow: hidden !important;
-  scrollbar-gutter: auto !important;
-  display: grid;
-  place-items: center;
+  scrollbar-gutter: auto;
 }
 
-.tactical-board {
-  --board-gap: clamp(1px, 0.35vmin, 4px);
-  width: 100% !important;
-  height: auto !important;
-  min-width: 0 !important;
-  max-width: 100%;
-  max-height: 100%;
-  aspect-ratio: 13 / 9;
-  margin: 0 !important;
-  padding: clamp(0.2rem, 0.65vmin, 0.75rem) !important;
-  border-width: clamp(2px, 0.55vmin, 6px) !important;
-  border-radius: clamp(0.45rem, 1.4vmin, 1.1rem) !important;
-  grid-template-columns: repeat(13, minmax(0, 1fr)) !important;
-  grid-template-rows: repeat(9, minmax(0, 1fr)) !important;
-  gap: var(--board-gap) !important;
-}
-
-@supports (width: 1cqw) {
-  .tactical-board {
-    width: min(100cqw, calc(100cqh * 13 / 9)) !important;
-    height: min(100cqh, calc(100cqw * 9 / 13)) !important;
-  }
-}
-
-.tactical-board > .cell {
-  width: 100% !important;
-  height: 100% !important;
-  min-width: 0 !important;
-  min-height: 0 !important;
-  aspect-ratio: auto !important;
-  padding: clamp(1px, 0.25vmin, 3px) !important;
-  border-radius: clamp(0.2rem, 0.8vmin, 0.65rem) !important;
-}
-
-.pause-shade {
-  grid-area: board !important;
-  max-width: 100%;
-  max-height: 100%;
-}
-
-.site-footer {
-  position: relative !important;
-  inset: auto !important;
-  min-height: 0 !important;
-  max-width: 100vw;
-  margin: 0 !important;
-  padding: clamp(0.2rem, 0.65dvh, 0.55rem) clamp(0.4rem, 1.5vw, 1rem) !important;
-  overflow: hidden;
-  font-size: clamp(0.5rem, 1.15vw, 0.82rem) !important;
-  line-height: 1 !important;
-  text-align: center;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
+.nav-popover-panel,
 .hand-choice-dialog[open] {
   max-height: calc(100dvh - 1rem);
   overflow: auto;
   overscroll-behavior: contain;
+}
+
+/* Keep each established device layout and only replace 100vh-based arena
+   sizing with dynamic-viewport and width-aware values. */
+@media (min-width: 901px) {
+  :root {
+    --board-cell-size: clamp(
+      22px,
+      min(calc((100vw - 380px) / 13), calc((100dvh - 280px) / 9)),
+      64px
+    );
+  }
+}
+
+@media (min-width: 641px) and (max-width: 900px) {
+  :root {
+    --board-cell-size: clamp(
+      18px,
+      min(calc((100vw - 76px) / 13), calc((100dvh - 350px) / 9)),
+      52px
+    );
+  }
+}
+
+@media (max-width: 640px) {
+  :root {
+    --board-cell-size: clamp(
+      16px,
+      min(calc((100vw - 48px) / 13), calc((100dvh - 415px) / 9)),
+      38px
+    );
+  }
 }
 
 .turn-active-unit {
@@ -274,7 +112,7 @@ body {
   border-radius: 999px;
   background: rgba(29, 22, 5, 0.9);
   color: #ffe797;
-  font-size: clamp(0.35rem, 0.75vmin, 0.55rem);
+  font-size: 0.55rem;
   font-weight: 800;
   letter-spacing: 0.04em;
   pointer-events: none;
@@ -294,42 +132,6 @@ body {
   grid-column: 1 / -1;
   border-color: rgba(255, 211, 92, 0.48);
   background: rgba(255, 211, 92, 0.08);
-}
-
-@media (max-width: 760px) {
-  .site-navbar {
-    flex-direction: row !important;
-  }
-
-  .navbar-links {
-    width: auto !important;
-    overflow: visible !important;
-  }
-
-  .site-footer {
-    font-size: clamp(0.42rem, 1.65vw, 0.65rem) !important;
-  }
-}
-
-@media (max-height: 620px) {
-  .site-navbar {
-    padding-block: 0.2rem !important;
-  }
-
-  .navbar-brand {
-    width: 1.85rem !important;
-    height: 1.85rem !important;
-  }
-
-  .action-feedback,
-  .board-action {
-    padding-block: 0.24rem !important;
-  }
-
-  .site-footer {
-    padding-block: 0.15rem !important;
-    font-size: 0.48rem !important;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
