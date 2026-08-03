@@ -58,7 +58,10 @@ function bootBoardActions() {
   });
 }
 
-if (typeof document !== "undefined" && typeof MutationObserver !== "undefined") {
+if (
+  typeof document !== "undefined" &&
+  typeof MutationObserver !== "undefined"
+) {
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", bootBoardActions, {
       once: true,
