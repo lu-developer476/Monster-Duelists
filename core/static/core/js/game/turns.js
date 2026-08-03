@@ -12,7 +12,9 @@ export function activeTurnUnitId(match) {
 export function activeTurnUnit(match, side = match?.turn?.active_side) {
   const activeId = activeTurnUnitId(match);
   if (activeId == null || !side) return null;
-  return unitsForSide(match, side).find((unit) => sameId(unit.id, activeId)) || null;
+  return (
+    unitsForSide(match, side).find((unit) => sameId(unit.id, activeId)) || null
+  );
 }
 
 export function clearActiveTurnUnit(match) {
@@ -32,7 +34,8 @@ export function lockActiveTurnUnit(match, side, unitId) {
 
   const units = unitsForSide(match, side);
   const unit = units.find((candidate) => sameId(candidate.id, unitId)) || null;
-  if (!unit) return { ok: false, reason: "missing-unit", active: null, unit: null };
+  if (!unit)
+    return { ok: false, reason: "missing-unit", active: null, unit: null };
 
   const current = activeTurnUnit(match, side);
   if (current && !sameId(current.id, unit.id)) {
@@ -69,7 +72,8 @@ export function enforceActiveTurnUnit(
     (unit) => Number(unit.hp_current ?? unit.card?.hp ?? 1) > 0,
   );
   const preferred = units.find((unit) => sameId(unit.id, preferredUnitId));
-  const candidate = preferred || units.find((unit) => unit.can_act !== false) || units[0];
+  const candidate =
+    preferred || units.find((unit) => unit.can_act !== false) || units[0];
   if (!candidate) return { ok: true, reason: "no-units", active: null };
 
   const result = lockActiveTurnUnit(match, side, candidate.id);

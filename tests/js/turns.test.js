@@ -51,9 +51,9 @@ describe("un monstruo activo por turno", () => {
 
     expect(canUnitActThisTurn(match, "host", "c")).toBe(true);
     expect(canUnitActThisTurn(match, "host", "a")).toBe(false);
-    expect(match.host.units.find((candidate) => candidate.id === "a")?.can_act).toBe(
-      false,
-    );
+    expect(
+      match.host.units.find((candidate) => candidate.id === "a")?.can_act,
+    ).toBe(false);
   });
 
   it("no consume los PA ni PM de los monstruos inactivos", () => {

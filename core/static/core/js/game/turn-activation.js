@@ -318,7 +318,8 @@ function closeInactiveUnitDialog(match) {
 
   const active = activeTurnUnit(match, "host");
   if (!active) return;
-  const title = document.querySelector("#unit-control-title")?.textContent || "";
+  const title =
+    document.querySelector("#unit-control-title")?.textContent || "";
   if (title === unitLabel(active)) return;
 
   dialog.close();
@@ -353,7 +354,9 @@ function bootTurnActivation() {
 }
 
 if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", bootTurnActivation, { once: true });
+  document.addEventListener("DOMContentLoaded", bootTurnActivation, {
+    once: true,
+  });
 } else {
   bootTurnActivation();
 }
