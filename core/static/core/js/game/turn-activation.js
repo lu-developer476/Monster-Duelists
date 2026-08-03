@@ -10,6 +10,7 @@ import {
 const BOARD_WIDTH = 13;
 const wrappedTurns = new WeakSet();
 const guardedUnits = new WeakSet();
+const activeSnapshots = new WeakMap();
 let selectedUnitValue = appState.selectedUnitId;
 let matchValue = appState.match;
 let syncScheduled = false;
@@ -21,6 +22,15 @@ function unitLabel(unit) {
   const battleLabel =
     unit.battle_label || `${unit.owner === "guest" ? "IA" : "J"}?`;
   return `${battleLabel} · ${unit.card?.name || "Monstruo"}`;
+}
+
+function rememberActiveSnapshot(match, unit) {
+  if (!match?.turn || !unit) return;
+  activeSnapshots.set(match.turn, {
+    id: unit.id,
+    x: unit.x,
+    y: unit.y,
+  });
 }
 
 function setFeedback(message, tone = "normal") {
@@ -99,6 +109,7 @@ function wrapTurn(match) {
         if (!changed) return;
 
         activeUnitIdValue = null;
+        activeSnapshots.delete(turn);
         selectedUnitValue = null;
         guardAllUnits(matchValue);
 
@@ -106,6 +117,7 @@ function wrapTurn(match) {
           const firstGuest = unitsForSide(matchValue, "guest")[0];
           if (firstGuest) {
             lockActiveTurnUnit(matchValue, "guest", firstGuest.id);
+            rememberActiveSnapshot(matchValue, firstGuest);
           }
         }
         scheduleSync();
@@ -176,6 +188,7 @@ Object.defineProperty(appState, "selectedUnitId", {
     }
 
     selectedUnitValue = result.unit.id;
+    rememberActiveSnapshot(match, result.unit);
     if (!previous) {
       setFeedback(
         `${unitLabel(result.unit)} quedó como unidad activa. Sólo este monstruo puede gastar PA y PM durante el turno.`,
@@ -195,26 +208,42 @@ function ensureStylesheet() {
   document.head.appendChild(link);
 }
 
-function transferLockAfterTransformation(match, side, previousActiveId) {
-  if (previousActiveId == null || activeTurnUnit(match, side)) return;
-  const candidates = unitsForSide(match, side).filter(
-    (unit) => unit.can_act !== false,
+function transferLockAfterTransformation(match, side) {
+  const snapshot = activeSnapshots.get(match?.turn);
+  if (!snapshot || activeTurnUnit(match, side)) return false;
+
+  const replacement = unitsForSide(match, side).find(
+    (unit) =>
+      unit.can_act !== false && unit.x === snapshot.x && unit.y === snapshot.y,
   );
-  if (candidates.length === 1) lockActiveTurnUnit(match, side, candidates[0].id);
+  if (!replacement) return false;
+
+  const result = lockActiveTurnUnit(match, side, replacement.id);
+  if (result.ok) rememberActiveSnapshot(match, replacement);
+  return result.ok;
 }
 
 function enforceCurrentSide(match) {
   const side = match?.turn?.active_side;
   if (!side) return;
 
-  const previousActiveId = activeTurnUnitId(match);
-  if (side === "guest") {
-    enforceActiveTurnUnit(match, "guest", { autoSelect: true });
+  const current = activeTurnUnit(match, side);
+  if (current) {
+    lockActiveTurnUnit(match, side, current.id);
+    rememberActiveSnapshot(match, current);
     return;
   }
 
-  enforceActiveTurnUnit(match, "host", { autoSelect: false });
-  transferLockAfterTransformation(match, "host", previousActiveId);
+  const activeId = activeTurnUnitId(match);
+  if (activeId != null) {
+    transferLockAfterTransformation(match, side);
+    return;
+  }
+
+  if (side === "guest") {
+    const result = enforceActiveTurnUnit(match, "guest", { autoSelect: true });
+    if (result.active) rememberActiveSnapshot(match, result.active);
+  }
 }
 
 function boardUnitsByPosition(match) {
@@ -259,26 +288,28 @@ function syncBoardVisuals(match) {
 function syncSummary(match) {
   const summary = document.querySelector("#match-summary");
   if (!summary || !match) return;
-  document.querySelector("#turn-active-unit-summary")?.remove();
 
   const side = match.turn?.active_side;
   const active = activeTurnUnit(match, side);
-  const item = document.createElement("div");
-  item.id = "turn-active-unit-summary";
-  item.className = "summary-field turn-active-unit-summary";
+  const value = active
+    ? unitLabel(active)
+    : side === "host"
+      ? "elegí un monstruo"
+      : "la IA elegirá un monstruo";
+
+  let item = document.querySelector("#turn-active-unit-summary");
+  if (!item) {
+    item = document.createElement("div");
+    item.id = "turn-active-unit-summary";
+    item.className = "summary-field turn-active-unit-summary";
+    summary.appendChild(item);
+  }
+
+  if (item.dataset.summaryValue === value) return;
   const label = document.createElement("strong");
   label.textContent = "Unidad del turno:";
-  item.append(label);
-  item.append(
-    ` ${
-      active
-        ? unitLabel(active)
-        : side === "host"
-          ? "elegí un monstruo"
-          : "la IA elegirá un monstruo"
-    }`,
-  );
-  summary.appendChild(item);
+  item.replaceChildren(label, document.createTextNode(` ${value}`));
+  item.dataset.summaryValue = value;
 }
 
 function closeInactiveUnitDialog(match) {
