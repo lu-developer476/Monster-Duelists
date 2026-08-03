@@ -4,6 +4,9 @@ on:
   push:
   pull_request:
 
+permissions:
+  contents: write
+
 jobs:
   quality:
     runs-on: ubuntu-latest
@@ -30,4 +33,20 @@ jobs:
       - run: npm install
       - run: npm run lint
       - run: npm test
+      - name: Apply Prettier formatting
+        run: npx prettier --write core/static/core/js/game/turn-activation.js core/static/core/js/game/turns.js tests/js/turns.test.js
+      - name: Commit formatted turn files
+        if: github.event_name == 'push'
+        shell: bash
+        run: |
+          if git diff --quiet -- core/static/core/js/game/turn-activation.js core/static/core/js/game/turns.js tests/js/turns.test.js; then
+            echo "Turn files are already formatted."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add core/static/core/js/game/turn-activation.js core/static/core/js/game/turns.js tests/js/turns.test.js
+          git commit -m "style: format single-monster turn files"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
       - run: npm run format:check
