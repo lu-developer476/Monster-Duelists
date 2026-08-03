@@ -7,33 +7,36 @@ const css = readFileSync(
   "utf8",
 );
 
-describe("single-screen game layout", () => {
-  it("locks the document to the dynamic viewport without page scrolling", () => {
+describe("responsive single-screen layout", () => {
+  it("locks only the document height to the dynamic viewport", () => {
     expect(css).toMatch(/html\s*\{[^}]*overflow:\s*hidden;/s);
     expect(css).toMatch(
       /body\s*\{[^}]*height:\s*100dvh;[^}]*overflow:\s*hidden\s*!important;[^}]*grid-template-rows:\s*auto\s+minmax\(0,\s*1fr\)\s+auto;/s,
     );
   });
 
-  it("keeps navbar, game and footer inside the same viewport grid", () => {
+  it("keeps the established navbar and control layouts intact", () => {
     expect(css).toMatch(
-      /\.site-navbar\s*\{[^}]*position:\s*relative\s*!important;/s,
+      /\.site-navbar\s*\{[^}]*position:\s*sticky\s*!important;/s,
     );
-    expect(css).toMatch(
-      /\.arcade-shell\.card-game-shell\s*\{[^}]*height:\s*100%;[^}]*overflow:\s*hidden\s*!important;/s,
+    expect(css).not.toMatch(
+      /\.navbar-links\s*\{[^}]*grid-template-columns:/s,
     );
-    expect(css).toMatch(
-      /\.site-footer\s*\{[^}]*white-space:\s*nowrap;[^}]*text-overflow:\s*ellipsis;/s,
+    expect(css).not.toMatch(
+      /\.board-action-ring\s*\{[^}]*grid-template-areas:/s,
     );
+    expect(css).not.toMatch(/\.site-footer\s*\{/s);
   });
 
-  it("sizes the tactical board from the available width and height", () => {
-    expect(css).toMatch(/\.board-frame\s*\{[^}]*container-type:\s*size;/s);
+  it("uses separate board sizing for desktop, tablet and mobile", () => {
+    expect(css).toMatch(/@media \(min-width: 901px\)/);
     expect(css).toMatch(
-      /width:\s*min\(100cqw,\s*calc\(100cqh\s*\*\s*13\s*\/\s*9\)\)\s*!important;/s,
+      /@media \(min-width: 641px\) and \(max-width: 900px\)/,
     );
-    expect(css).toMatch(
-      /height:\s*min\(100cqh,\s*calc\(100cqw\s*\*\s*9\s*\/\s*13\)\)\s*!important;/s,
-    );
+    expect(css).toMatch(/@media \(max-width: 640px\)/);
+    expect(css.match(/--board-cell-size:/g)).toHaveLength(3);
+    expect(css).toMatch(/calc\(\(100dvh - 280px\) \/ 9\)/);
+    expect(css).toMatch(/calc\(\(100dvh - 350px\) \/ 9\)/);
+    expect(css).toMatch(/calc\(\(100dvh - 415px\) \/ 9\)/);
   });
 });
