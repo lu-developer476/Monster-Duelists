@@ -33,9 +33,9 @@ export function syncBoardActionAvailability(root = document) {
     const button = root.querySelector(selector);
     if (!button || button.getAttribute("aria-busy") === "true") return;
 
-    const enabled = availability[action];
-    if (button.disabled === enabled) button.disabled = !enabled;
-    button.setAttribute("aria-disabled", String(!enabled));
+    const shouldDisable = !availability[action];
+    if (button.disabled !== shouldDisable) button.disabled = shouldDisable;
+    button.setAttribute("aria-disabled", String(shouldDisable));
   });
 }
 
@@ -58,10 +58,12 @@ function bootBoardActions() {
   });
 }
 
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", bootBoardActions, {
-    once: true,
-  });
-} else {
-  bootBoardActions();
+if (typeof document !== "undefined" && typeof MutationObserver !== "undefined") {
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", bootBoardActions, {
+      once: true,
+    });
+  } else {
+    bootBoardActions();
+  }
 }
