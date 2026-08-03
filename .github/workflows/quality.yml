@@ -1,22 +1,31 @@
 name: Quality
+
 on:
   push:
   pull_request:
+
+permissions:
+  contents: write
+
 jobs:
   quality:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with: { lfs: true }
+        with:
+          lfs: true
       - uses: actions/setup-python@v5
-        with: { python-version: '3.12', cache: pip }
+        with:
+          python-version: '3.12'
+          cache: pip
       - run: pip install -r requirements.txt ruff
       - run: python manage.py check
       - run: python manage.py validate_cards
       - run: python manage.py test
       - run: ruff check .
       - uses: actions/setup-node@v4
-        with: { node-version: '22' }
+        with:
+          node-version: '22'
       - uses: actions/cache@v4
         with:
           path: ~/.npm
@@ -24,4 +33,20 @@ jobs:
       - run: npm install
       - run: npm run lint
       - run: npm test
+      - name: Apply Prettier formatting
+        run: npx prettier --write core/static/core/js tests/js package.json
+      - name: Commit formatted sources
+        if: github.event_name == 'push'
+        shell: bash
+        run: |
+          if git diff --quiet -- core/static/core/js tests/js package.json; then
+            echo "Sources are already formatted."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add core/static/core/js tests/js package.json
+          git commit -m "style: apply Prettier formatting"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
       - run: npm run format:check
