@@ -1,0 +1,168 @@
+name: Apply single mover patch
+
+on:
+  push:
+    branches:
+      - codex/one-monster-movement-per-turn
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/one-monster-movement-per-turn
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Patch movement engine
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("core/static/core/js/game/bootstrap.js")
+          source = path.read_text(encoding="utf-8")
+
+          replacements = [
+              (
+                  'import { shuffle } from "./rules.js";',
+                  '''import {
+            canUnitMoveThisTurn,
+            claimTurnMovement,
+            resetTurnMovement,
+            shuffle,
+          } from "./rules.js";''',
+              ),
+              (
+                  '    turn: { number: 1, active_side: "host" },',
+                  '    turn: { number: 1, active_side: "host", moved_unit_id: null },',
+              ),
+              (
+                  '''  if (!unit || !unit.can_act || unit.move_points <= 0)
+            throw new Error("Movimiento inválido: los desplazamientos consumen PM.");
+          if (''',
+                  '''  if (!unit || !unit.can_act || unit.move_points <= 0)
+            throw new Error("Movimiento inválido: los desplazamientos consumen PM.");
+          if (!canUnitMoveThisTurn(appState.match.turn, unitId)) {
+            const moverUnitId = appState.match.turn?.moved_unit_id;
+            const mover = appState.match[side].units.find(
+              (item) => item.id === moverUnitId,
+            );
+            throw new Error(
+              `Este turno ya se movió ${mover?.card?.name || "otro monstruo"}. Sólo un monstruo puede gastar PM por turno.`,
+            );
+          }
+          if (''',
+              ),
+              (
+                  '''  if (spentPm > unit.move_points)
+            throw new Error("La celda está fuera del rango de movimiento.");
+          const from = { x: unit.x, y: unit.y };''',
+                  '''  if (spentPm > unit.move_points)
+            throw new Error("La celda está fuera del rango de movimiento.");
+          if (!claimTurnMovement(appState.match.turn, unitId))
+            throw new Error("Otro monstruo ya consumió el movimiento de este turno.");
+          const from = { x: unit.x, y: unit.y };''',
+              ),
+              (
+                  '''function endSideTurn(side) {
+          const nextSide = side === "host" ? "guest" : "host";
+          appState.match.turn.active_side = nextSide;''',
+                  '''function endSideTurn(side) {
+          const nextSide = side === "host" ? "guest" : "host";
+          resetTurnMovement(appState.match.turn);
+          appState.match.turn.active_side = nextSide;''',
+              ),
+              (
+                  '''        } else {
+                    const nextCell = stepToward(unit, target);''',
+                  '''        } else {
+                    if (!canUnitMoveThisTurn(appState.match.turn, unit.id)) {
+                      unit.can_act = false;
+                      break;
+                    }
+                    const nextCell = stepToward(unit, target);''',
+              ),
+              (
+                  '''  const moveButton = $("#unit-control-move");
+          if (moveButton)
+            moveButton.onclick = () => {
+              dialog.close();
+              appState.selectedUnitId = unit.id;
+              appState.selectedHandIndex = null;
+              renderGame();
+              setActionFeedback(
+                `${unit.card.name} seleccionado para mover. Elegí una casilla libre dentro de su PM.`,
+                "normal",
+              );
+            };''',
+                  '''  const moveButton = $("#unit-control-move");
+          if (moveButton) {
+            const canMove = canUnitMoveThisTurn(appState.match?.turn, unit.id);
+            moveButton.disabled = !canMove;
+            moveButton.title = canMove
+              ? ""
+              : "Otro monstruo ya consumió el movimiento de este turno.";
+            moveButton.onclick = () => {
+              dialog.close();
+              appState.selectedUnitId = unit.id;
+              appState.selectedHandIndex = null;
+              renderGame();
+              setActionFeedback(
+                `${unit.card.name} seleccionado para mover. Elegí una casilla libre dentro de su PM.`,
+                "normal",
+              );
+            };
+          }''',
+              ),
+              (
+                  '''  const moveHints = new Set();
+          const attackHints = new Set();
+          if (canPlay && selectedUnit) {''',
+                  '''  const moveHints = new Set();
+          const attackHints = new Set();
+          const canSelectedUnitMove =
+            canPlay &&
+            selectedUnit &&
+            canUnitMoveThisTurn(appState.match?.turn, selectedUnit.id);
+          if (canPlay && selectedUnit) {''',
+              ),
+              (
+                  '''        if (
+                  !unitAt(x, y) &&
+                  distance(selectedUnit, probe) <= selectedUnit.move_points
+                )''',
+                  '''        if (
+                  canSelectedUnitMove &&
+                  !unitAt(x, y) &&
+                  distance(selectedUnit, probe) <= selectedUnit.move_points
+                )''',
+              ),
+          ]
+
+          for old, new in replacements:
+              if old not in source:
+                  raise SystemExit(f"Expected source fragment not found:\n{old}")
+              source = source.replace(old, new, 1)
+
+          path.write_text(source, encoding="utf-8")
+          Path(".github/workflows/apply-single-mover-patch.yml").unlink()
+          PY
+      - run: npm install
+      - run: npx prettier --write core/static/core/js/game/bootstrap.js core/static/core/js/game/rules.js tests/js/rules.test.js
+      - run: npm run lint
+      - run: npm test
+      - name: Commit patch
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "feat: allow only one monster to move per turn"
+          git push origin HEAD:codex/one-monster-movement-per-turn
