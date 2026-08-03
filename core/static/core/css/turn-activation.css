@@ -1,0 +1,48 @@
+.turn-active-unit {
+  position: relative;
+  z-index: 2;
+  outline: 3px solid rgba(255, 211, 92, 0.95);
+  outline-offset: -3px;
+  box-shadow:
+    0 0 0 2px rgba(0, 0, 0, 0.55),
+    0 0 20px rgba(255, 211, 92, 0.72);
+}
+
+.turn-active-unit::after {
+  content: "ACTIVO";
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  z-index: 4;
+  padding: 0.12rem 0.3rem;
+  border-radius: 999px;
+  background: rgba(29, 22, 5, 0.9);
+  color: #ffe797;
+  font-size: 0.55rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  pointer-events: none;
+}
+
+.turn-inactive-unit {
+  opacity: 0.48;
+  filter: grayscale(0.65) saturate(0.45);
+}
+
+.turn-inactive-unit:hover,
+.turn-inactive-unit:focus-visible {
+  opacity: 0.72;
+}
+
+.turn-active-unit-summary {
+  grid-column: 1 / -1;
+  border-color: rgba(255, 211, 92, 0.48);
+  background: rgba(255, 211, 92, 0.08);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .turn-active-unit,
+  .turn-inactive-unit {
+    transition: none;
+  }
+}
