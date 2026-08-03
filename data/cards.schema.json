@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Monster Duelists card catalog",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": ["name", "family", "stage", "level_min", "level_max", "hp", "hp_min", "hp_max", "spells", "image"],
+    "properties": {
+      "name": {"type": "string", "minLength": 1},
+      "family": {"type": "string", "minLength": 1},
+      "stage": {"enum": ["base", "fusion", "evolution"]},
+      "level_min": {"type": "integer", "minimum": 0},
+      "level_max": {"type": "integer", "minimum": 0},
+      "hp": {"type": "integer", "minimum": 1},
+      "hp_min": {"type": "integer", "minimum": 1},
+      "hp_max": {"type": "integer", "minimum": 1},
+      "spells": {"type": "array", "items": {"type": "object", "required": ["name", "cost", "range", "damage_min", "damage_max"], "properties": {"range": {"oneOf": [{"type": "integer", "minimum": 0}, {"type": "string", "pattern": "^[0-9]+-[0-9]+$"}]}}},
+      "image": {"type": "string", "minLength": 1}
+    }
+  }
+}

@@ -362,3 +362,74 @@ El mirror replica tanto las referencias Git como los objetos de Git LFS necesari
 Este orden evita que Render detecte un commit nuevo en GitLab y lo clone antes de que las imágenes reales estén disponibles. Si GitHub LFS no entrega los objetos por cuota, disponibilidad o permisos, el mirror se detiene y no empuja la referencia Git. Si GitLab rechaza o no recibe los objetos LFS, también se detiene el mirror. No desactives `git lfs fsck` ni ocultes errores de `git lfs fetch`, `git lfs fsck` o `git lfs push`: esa validación impide que Render reciba commits con punteros LFS sin binarios.
 
 Si una branch está protegida en GitLab, GitLab puede rechazar un push no fast-forward aunque el workflow use `--force-with-lease` para evitar sobrescrituras incondicionales.
+
+## Arquitectura backendless-first
+
+Django entrega HTML y el catálogo canónico de `data/cards.json`; no participa del
+motor de combate. Los endpoints de partidas se conservan únicamente como respuestas
+`410 Gone`. El entrypoint `core/static/core/js/game.js` usa módulos ES nativos (sin
+bundler de producción):
+
+- `game/cards.js`: configuración normalizada, conjunto elegible e invariantes de selección.
+- `game/rules.js`: reglas puras reutilizables (Fisher–Yates, distancia y absorción de daño).
+- `game/persistence.js`: envelope de guardado v4, validación y migraciones defensivas.
+- `game/state.js`: estado mutable explícito de la aplicación.
+- `game/bootstrap.js`: integración incremental de UI, motor existente, IA y audio.
+
+El flujo es `controles -> matchConfig normalizada -> getEligibleCards -> motor -> render`,
+y tanto jugador como IA reciben el mismo conjunto permitido. El guardado incluye
+`schemaVersion`, `savedAt`, `matchConfig` y `match`; JSON corrupto o versiones
+incompatibles se descartan con un mensaje comprensible.
+
+## Catálogo y hechizos
+
+`data/cards.json` es la única fuente canónica. `data/cards.schema.json` documenta el
+contrato externo y `python manage.py validate_cards` acumula errores de estructura,
+rangos, duplicados, hechizos e imágenes. El formato histórico de rango (`"1-2"`) se
+acepta durante la migración. Para cartas nuevas, preferí campos semánticos explícitos:
+`id`, `type`, `target`, `damage`, `healing`, `area`, `summon_card`, `fusion_recipe`,
+`evolution_to`, `usable_from_turn`, `status_effects` y `duration_turns`.
+
+### Agregar contenido
+
+1. **Carta:** agregá el objeto a `data/cards.json`, una imagen bajo `public/images/`
+   (manteniendo Git LFS), un nombre único y estadísticas/rangos válidos.
+2. **Receta:** declarala con un identificador estable y referencias a slugs existentes;
+   indicá `type: "fusion"` y `fusion_recipe` en el hechizo correspondiente.
+3. **Evolución:** referenciá un slug existente con `type: "evolution"`, `evolution_to`
+   y `usable_from_turn`; no codifiques la regla en el texto descriptivo.
+4. Ejecutá validación y ambas suites antes de enviar el cambio.
+
+## Desarrollo y calidad
+
+```bash
+python -m pip install -r requirements.txt
+python manage.py check
+python manage.py validate_cards
+python manage.py test
+ruff check .
+npm install
+npm run lint
+npm test
+npm run format:check
+```
+
+La aplicación no necesita Node en Render. Node, ESLint, Prettier y Vitest son sólo
+herramientas de desarrollo/CI. `.github/workflows/quality.yml` ejecuta Python 3.12,
+validación del catálogo, Ruff y las comprobaciones JavaScript con cachés de pip/npm.
+
+## Git LFS: resolución de problemas
+
+Comprobá `git lfs install`, `git lfs status` y `git lfs fsck`. Si una imagen aparece
+como un pequeño puntero de texto, ejecutá `git lfs pull`. No retires los patrones de
+`.gitattributes`; el mirror de GitLab depende de que los objetos LFS estén disponibles
+en el remoto de destino. El workflow `mirror-to-gitlab.yml` permanece independiente.
+
+## Seguridad de despliegue
+
+En desarrollo `DJANGO_DEBUG` vale `True` si no se define y se usa una clave local
+claramente insegura. En producción (`DJANGO_DEBUG=False`) `DJANGO_SECRET_KEY` es
+obligatoria y el arranque falla con un mensaje explícito si falta. Render ya genera
+esta variable mediante `render.yaml`.
+
+Consultá también `ATTRIBUTION.md` antes de redistribuir recursos visuales.

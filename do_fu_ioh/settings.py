@@ -1,4 +1,3 @@
-import hashlib
 import os
 import sys
 from pathlib import Path
@@ -44,16 +43,13 @@ def _is_local_host(host):
     return host in {'localhost', '127.0.0.1', '[::1]'}
 
 
-DEBUG = _env_flag('DJANGO_DEBUG', default=False)
-# Prefer an explicit secret, but never crash the public site with a bare 500
-# when the hosting environment is missing/misquoting the variable. The fallback
-# is deterministic per deployment database URL so sessions remain stable until
-# DJANGO_SECRET_KEY is configured correctly.
+DEBUG = _env_flag('DJANGO_DEBUG', default=True)
 SECRET_KEY_FALLBACK = 'dev-only-secret-key-change-me-before-production-please'
 SECRET_KEY = _get_env('DJANGO_SECRET_KEY')
 if not SECRET_KEY:
-    fallback_material = _get_env('DATABASE_URL') or str(BASE_DIR)
-    SECRET_KEY = 'fallback-' + hashlib.sha256(fallback_material.encode('utf-8')).hexdigest()
+    if not DEBUG:
+        raise RuntimeError('DJANGO_SECRET_KEY es obligatoria cuando DJANGO_DEBUG=False.')
+    SECRET_KEY = SECRET_KEY_FALLBACK
 
 RUNNING_TESTS = any(arg.startswith('test') for arg in sys.argv)
 

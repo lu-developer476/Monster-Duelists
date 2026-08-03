@@ -5,7 +5,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="csrf-token" content="{{ csrf_token }}" />
-  <title>MMORPG Dofus Duelists</title>
+  <title>Monster Duelists · Duelo táctico single-player</title>
   <link rel="icon" type="image/png" href="{% static 'images/favicon.png' %}" />
   <link rel="stylesheet" href="{% static 'core/css/styles.css' %}" />
 </head>
@@ -213,6 +213,6 @@
   </main>
   <footer class="site-footer">© 2026 Todos los derechos reservados • Built with Python &amp; Django • UX/UI Interface • Deployed on Render ®</footer>
   {{ cards_seed_json|json_script:"cards-seed" }}
-  <script src="{% static 'core/js/game.js' %}"></script>
+  <script type="module" src="{% static 'core/js/game.js' %}"></script>
 </body>
 </html>

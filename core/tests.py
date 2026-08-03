@@ -514,24 +514,11 @@ class BackendlessModeTests(TestCase):
         self.assertContains(response, 'Modo sin Backend activo')
         self.assertContains(response, 'Configuración de juego')
 
-    def test_frontend_keeps_catalog_and_combat_renderers(self):
+    def test_frontend_uses_a_native_module_entrypoint(self):
+        response = self.client.get('/')
+        self.assertContains(response, 'type="module"')
         script = Path(__file__).resolve().parent / 'static' / 'core' / 'js' / 'game.js'
-        source = script.read_text(encoding='utf-8')
-
-        self.assertIn('function renderCatalog()', source)
-        self.assertIn('function renderBoard(', source)
-        self.assertIn('function chooseSpellForAttack(', source)
-
-
-    def test_frontend_offers_two_distinct_combat_ost_tracks(self):
-        script = Path(__file__).resolve().parent / 'static' / 'core' / 'js' / 'game.js'
-        source = script.read_text(encoding='utf-8')
-
-        self.assertEqual(source.count("name: 'Forja de Wakfu Roto'"), 1)
-        self.assertEqual(source.count("name: 'Ritual del Bosque Profundo'"), 1)
-        self.assertNotIn("name: 'Brotes del Primer Duelo'", source)
-        self.assertIn("percussion === 'spark'", source)
-        self.assertIn("percussion === 'pulse'", source)
+        self.assertLessEqual(len(script.read_text(encoding='utf-8').splitlines()), 5)
 
     def test_health_does_not_depend_on_database(self):
         response = self.client.get('/health/')
@@ -555,34 +542,10 @@ class BackendlessModeTests(TestCase):
         payload = response.json()
         self.assertTrue(all(card['summon_cost'] == 0 for card in payload['cards']))
 
-    def test_frontend_allows_multiple_free_summons_for_player_and_ai(self):
-        script = Path(__file__).resolve().parent / 'static' / 'core' / 'js' / 'game.js'
-        source = script.read_text(encoding='utf-8')
-
-        self.assertIn('function summonCost(card = {}) { return FREE_SUMMON_COST; }', source)
-        self.assertIn("while (ai.hand.length && deployCells('guest').length)", source)
-        self.assertNotIn('No alcanza la energía para invocar.', source)
-        self.assertNotIn('Ya invocaste este turno.', source)
-
-
-    def test_frontend_blocks_evolution_for_spell_summoned_units_only(self):
-        script = Path(__file__).resolve().parent / 'static' / 'core' / 'js' / 'game.js'
-        source = script.read_text(encoding='utf-8')
-
-        self.assertIn('summoned_by_spell: Boolean(options.summoned_by_spell)', source)
-        self.assertIn('!unit.summoned_by_spell', source)
-        self.assertIn('function canEvolveNow(unit) { return canUnitEvolve(unit); }', source)
-        self.assertIn('Los monstruos invocados no pueden evolucionar', source)
-
-    def test_frontend_groups_fusion_rules_by_monster_family(self):
-        script = Path(__file__).resolve().parent / 'static' / 'core' / 'js' / 'game.js'
-        source = script.read_text(encoding='utf-8')
-
-        self.assertIn('const MONSTER_FUSION_RULES_BY_FAMILY', source)
-        self.assertIn("'Píos': {", source)
-        self.assertIn("'Kitsus': {", source)
-        self.assertIn("'Escarahojas': {", source)
-        self.assertIn('Object.values(MONSTER_FUSION_RULES_BY_FAMILY)', source)
+    def test_catalog_health_reports_valid_canonical_data(self):
+        response = self.client.get('/health/')
+        self.assertTrue(response.json()['checks']['catalog'])
+        self.assertEqual(response.json()['checks']['cards'], 83)
 
     def test_match_apis_are_disabled_in_backendless_mode(self):
         response = self.client.post('/api/match/create-vs-ai/', data='{}', content_type='application/json')

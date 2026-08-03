@@ -2114,3 +2114,18 @@ body {
   border-color: rgba(187, 157, 255, .82);
   background: rgba(49, 35, 86, .92);
 }
+
+/* Accessibility: motion is decorative and never required to understand combat. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+@media (max-width: 640px) {
+  .board-scroll { overflow: auto; max-width: 100vw; }
+  .board-action-ring { padding-inline: 0.25rem; }
+  .site-navbar { position: sticky; top: 0; z-index: 20; }
+}
