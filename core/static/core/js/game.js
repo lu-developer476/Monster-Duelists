@@ -1,1 +1,1 @@
-import './game/bootstrap.js';
+import "./game/bootstrap.js";

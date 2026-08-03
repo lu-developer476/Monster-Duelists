@@ -13,6 +13,10 @@ export function absorbDamage({ hp, shell }, damage) {
   const amount = Math.max(0, Number(damage) || 0);
   const shellDamage = Math.min(Math.max(0, shell), amount);
   const hpDamage = Math.min(Math.max(0, hp), amount - shellDamage);
-  return { hp: Math.max(0, hp - hpDamage), shell: Math.max(0, shell - shellDamage), hpDamage, shellDamage };
+  return {
+    hp: Math.max(0, hp - hpDamage),
+    shell: Math.max(0, shell - shellDamage),
+    hpDamage,
+    shellDamage,
+  };
 }
-

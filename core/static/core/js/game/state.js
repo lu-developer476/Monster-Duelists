@@ -1,9 +1,21 @@
 export const appState = {
-  cards: [], roomCode: null, match: null, matchConfig: null,
-  selectedHandIndex: null, selectedUnitId: null,
-  selectedCatalogCardIds: new Set(), selectedFamily: '', selectedStage: '',
-  actionFeedback: { message: 'Seleccioná una carta o una unidad para continuar.', tone: 'normal' },
-  clientLog: [], combatEffects: [], aiPlayback: false, hasPromptedInitialHand: false,
-  matchSetupStep: 0, audio: { ctx: null, enabled: true, unlocked: false },
+  cards: [],
+  roomCode: null,
+  match: null,
+  matchConfig: null,
+  selectedHandIndex: null,
+  selectedUnitId: null,
+  selectedCatalogCardIds: new Set(),
+  selectedFamily: "",
+  selectedStage: "",
+  actionFeedback: {
+    message: "Seleccioná una carta o una unidad para continuar.",
+    tone: "normal",
+  },
+  clientLog: [],
+  combatEffects: [],
+  aiPlayback: false,
+  hasPromptedInitialHand: false,
+  matchSetupStep: 0,
+  audio: { ctx: null, enabled: true, unlocked: false },
 };
-
