@@ -1,3 +1,15 @@
+/* Keep the navigation in normal document flow on every viewport.
+   The legacy body padding was only needed while the navbar was fixed and
+   produced an empty green block once mobile switched it to sticky. */
+body {
+  padding-top: 0 !important;
+}
+
+.site-navbar {
+  position: sticky !important;
+  top: 0;
+}
+
 .turn-active-unit {
   position: relative;
   z-index: 2;
