@@ -12,7 +12,9 @@ describe("responsive single-screen layout", () => {
     expect(css).toContain("height: 100dvh;");
     expect(css).toContain("display: flex;");
     expect(css).toContain("flex-direction: column;");
-    expect(css).not.toContain("grid-template-rows: auto minmax(0, 1fr) auto;");
+    expect(css).not.toContain(
+      "grid-template-rows: auto minmax(0, 1fr) auto;",
+    );
     expect(css).not.toContain("position: sticky !important;");
   });
 
@@ -35,8 +37,14 @@ describe("responsive single-screen layout", () => {
   });
 
   it("keeps the four board controls above non-interactive overlays", () => {
-    expect(css).toMatch(/\.board-action\s*\{[\s\S]*?z-index:\s*30;/);
-    expect(css).toMatch(/\.board-action\s*\{[\s\S]*?pointer-events:\s*auto;/);
-    expect(css).toMatch(/\.pause-shade\s*\{[\s\S]*?pointer-events:\s*none\s*!important;/);
+    expect(css).toMatch(
+      /\.board-action\s*\{[\s\S]*?z-index:\s*30;/,
+    );
+    expect(css).toMatch(
+      /\.board-action\s*\{[\s\S]*?pointer-events:\s*auto;/,
+    );
+    expect(css).toMatch(
+      /\.pause-shade\s*\{[\s\S]*?pointer-events:\s*none\s*!important;/,
+    );
   });
 });
