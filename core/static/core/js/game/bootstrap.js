@@ -30,6 +30,7 @@ const MATCH_SETUP_STEPS = ["cards", "bestiary", "mode"];
 const $ = (sel) => document.querySelector(sel);
 const familyFilter = $("#family-filter");
 const stageFilter = $("#stage-filter");
+let boardActionPending = false;
 
 const MONSTER_FUSION_RULES_BY_FAMILY = {
   Píos: {
@@ -1545,6 +1546,11 @@ async function onArenaCardClick(unit, side) {
 
 async function onBoardCellClick(x, y) {
   const { me, enemy, mySide } = resolveSides();
+  if (boardActionPending)
+    return setActionFeedback(
+      "La acción anterior todavía se está resolviendo. Esperá un instante.",
+      "normal",
+    );
   if (!appState.match || !isMyTurn(mySide))
     return setActionFeedback(
       "La IA está jugando ahora; el Registro detalla sus jugadas.",
@@ -1558,18 +1564,24 @@ async function onBoardCellClick(x, y) {
   try {
     if (occupant) return onArenaCardClick(occupant, occupant.owner);
     if (selectedHandCard) {
+      // Clear the selection before awaiting the action.  Rendering the board during
+      // the summon used to leave the same hand index selected; after the splice,
+      // that index referred to a different card and a second click could invoke it
+      // too (or leave the UI apparently stuck while both actions resolved).
+      boardActionPending = true;
+      appState.selectedHandIndex = null;
       await sendAction({
         action: "summon",
-        hand_index: appState.selectedHandIndex,
+        hand_index: me.hand.indexOf(selectedHandCard),
         position: { x, y },
       });
-      appState.selectedHandIndex = null;
       return setActionFeedback(
         `${selectedHandCard.name} fue invocada en (${x + 1}, ${y + 1}).`,
         "success",
       );
     }
     if (selectedUnit) {
+      boardActionPending = true;
       await sendAction({
         action: "move",
         unit_id: selectedUnit.id,
@@ -1586,6 +1598,8 @@ async function onBoardCellClick(x, y) {
     );
   } catch (err) {
     return setActionFeedback(err.message, "error");
+  } finally {
+    boardActionPending = false;
   }
 }
 
